@@ -44,7 +44,7 @@ fn eval_ast(ast: Expr) -> i32 {
 	}
 }
 
-fn eval(expression: &str) -> Result<i32, NomError<&str>> {
+pub fn eval(expression: &str) -> Result<i32, NomError<&str>> {
 	Ok(eval_ast(
 		all_consuming(parse_expr)(expression)
 			.finish()?
