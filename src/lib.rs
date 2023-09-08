@@ -102,7 +102,7 @@ fn parse_i32() {
 
 #[test]
 fn parse_add() {
-	let (r, ast) = parse_expr("1+2").finish().unwrap();
+	let (r, ast) = parse_expr("1 + 2").finish().unwrap();
 
 	assert_eq!(
 		ast,
