@@ -30,19 +30,47 @@ fn parse_number_i32(i: &str) -> IResult<&str, Expr> {
 		.parse(i)
 }
 
-fn parse_expr(i: &str) -> IResult<&str, Expr> {
+fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
+	alt((parse_number_i32,))(i)
+}
+
+fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 	alt((
-		parse_number_i32,
-		separated_pair(parse_expr, ws(char('+')), parse_expr)
-			.map(|(ex1, ex2)| Expr::Add(Box::new(ex1), Box::new(ex2))),
-		separated_pair(parse_expr, ws(char('-')), parse_expr)
-			.map(|(ex1, ex2)| Expr::Sub(Box::new(ex1), Box::new(ex2))),
-		separated_pair(parse_expr, ws(char('*')), parse_expr)
-			.map(|(ex1, ex2)| Expr::Mul(Box::new(ex1), Box::new(ex2))),
-		separated_pair(parse_expr, ws(char('/')), parse_expr)
-			.map(|(ex1, ex2)| Expr::Div(Box::new(ex1), Box::new(ex2))),
+		separated_pair(
+			parse_expr_atom,
+			ws(char('*')),
+			parse_expr_atom,
+		)
+		.map(|(ex1, ex2)| Expr::Mul(Box::new(ex1), Box::new(ex2))),
+		separated_pair(
+			parse_expr_atom,
+			ws(char('/')),
+			parse_expr_atom,
+		)
+		.map(|(ex1, ex2)| Expr::Div(Box::new(ex1), Box::new(ex2))),
+		parse_expr_atom,
 	))(i)
 }
+
+fn parse_expr_binop_add(i: &str) -> IResult<&str, Expr> {
+	alt((
+		separated_pair(
+			parse_expr_binop_mul,
+			ws(char('+')),
+			parse_expr_binop_mul,
+		)
+		.map(|(ex1, ex2)| Expr::Add(Box::new(ex1), Box::new(ex2))),
+		separated_pair(
+			parse_expr_binop_mul,
+			ws(char('-')),
+			parse_expr_binop_mul,
+		)
+		.map(|(ex1, ex2)| Expr::Sub(Box::new(ex1), Box::new(ex2))),
+		parse_expr_binop_mul,
+	))(i)
+}
+
+fn parse_expr(i: &str) -> IResult<&str, Expr> { parse_expr_binop_add(i) }
 
 fn eval_ast(ast: Expr) -> i32 {
 	match ast {
