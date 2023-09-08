@@ -61,3 +61,27 @@ pub fn eval(expression: &str) -> Result<i32, NomError<&str>> {
 			.1,
 	))
 }
+
+#[test]
+fn parse_i32() {
+	let (r, ast) = parse_number_i32("1323")
+		.finish()
+		.unwrap();
+
+	assert_eq!(ast, Expr::Literal(1323));
+	assert_eq!(r, "")
+}
+
+#[test]
+fn parse_add() {
+	let (r, ast) = parse_expr("1+2").finish().unwrap();
+
+	assert_eq!(
+		ast,
+		Expr::Add(
+			Box::new(Expr::Literal(1)),
+			Box::new(Expr::Literal(2))
+		)
+	);
+	assert_eq!(r, "")
+}
