@@ -7,6 +7,7 @@ use nom::{
 	AsChar, Finish, IResult, InputTakeAtPosition, Parser,
 };
 
+#[derive(Debug)]
 enum Expr {
 	Literal(i32),
 	Add(Box<Expr>, Box<Expr>),
