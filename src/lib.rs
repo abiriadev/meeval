@@ -1,10 +1,10 @@
 use nom::{
 	branch::alt,
-	character::complete::{char, i32},
+	character::complete::{char, i32, multispace0},
 	combinator::all_consuming,
-	error::Error as NomError,
-	sequence::separated_pair,
-	Finish, IResult, Parser,
+	error::{Error as NomError, ParseError},
+	sequence::{delimited, separated_pair},
+	AsChar, Finish, IResult, InputTakeAtPosition, Parser,
 };
 
 enum Expr {
@@ -15,6 +15,15 @@ enum Expr {
 	Div(Box<Expr>, Box<Expr>),
 }
 
+fn ws<I, O, E, P>(p: P) -> impl Parser<I, O, E>
+where
+	P: Parser<I, O, E>,
+	I: InputTakeAtPosition,
+	<I as InputTakeAtPosition>::Item: AsChar + Clone,
+	E: ParseError<I>, {
+	delimited(multispace0, p, multispace0)
+}
+
 fn parse_number_i32(i: &str) -> IResult<&str, Expr> {
 	i32.map(|int| Expr::Literal(int))
 		.parse(i)
@@ -23,13 +32,13 @@ fn parse_number_i32(i: &str) -> IResult<&str, Expr> {
 fn parse_expr(i: &str) -> IResult<&str, Expr> {
 	alt((
 		parse_number_i32,
-		separated_pair(parse_expr, char('+'), parse_expr)
+		separated_pair(parse_expr, ws(char('+')), parse_expr)
 			.map(|(ex1, ex2)| Expr::Add(Box::new(ex1), Box::new(ex2))),
-		separated_pair(parse_expr, char('-'), parse_expr)
+		separated_pair(parse_expr, ws(char('-')), parse_expr)
 			.map(|(ex1, ex2)| Expr::Sub(Box::new(ex1), Box::new(ex2))),
-		separated_pair(parse_expr, char('*'), parse_expr)
+		separated_pair(parse_expr, ws(char('*')), parse_expr)
 			.map(|(ex1, ex2)| Expr::Mul(Box::new(ex1), Box::new(ex2))),
-		separated_pair(parse_expr, char('/'), parse_expr)
+		separated_pair(parse_expr, ws(char('/')), parse_expr)
 			.map(|(ex1, ex2)| Expr::Div(Box::new(ex1), Box::new(ex2))),
 	))(i)
 }
@@ -46,7 +55,7 @@ fn eval_ast(ast: Expr) -> i32 {
 
 pub fn eval(expression: &str) -> Result<i32, NomError<&str>> {
 	Ok(eval_ast(
-		all_consuming(parse_expr)(expression)
+		all_consuming(ws(parse_expr))(expression)
 			.finish()?
 			.1,
 	))
