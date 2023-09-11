@@ -37,13 +37,13 @@ fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
 fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 	alt((
 		separated_pair(
-			parse_expr_atom,
+			parse_expr_binop_mul,
 			ws(char('*')),
 			parse_expr_atom,
 		)
 		.map(|(ex1, ex2)| Expr::Mul(Box::new(ex1), Box::new(ex2))),
 		separated_pair(
-			parse_expr_atom,
+			parse_expr_binop_mul,
 			ws(char('/')),
 			parse_expr_atom,
 		)
@@ -55,13 +55,13 @@ fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 fn parse_expr_binop_add(i: &str) -> IResult<&str, Expr> {
 	alt((
 		separated_pair(
-			parse_expr_binop_mul,
+			parse_expr_binop_add,
 			ws(char('+')),
 			parse_expr_binop_mul,
 		)
 		.map(|(ex1, ex2)| Expr::Add(Box::new(ex1), Box::new(ex2))),
 		separated_pair(
-			parse_expr_binop_mul,
+			parse_expr_binop_add,
 			ws(char('-')),
 			parse_expr_binop_mul,
 		)
