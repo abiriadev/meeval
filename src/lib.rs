@@ -22,7 +22,6 @@ enum Token {
 	Plus,
 	Minus,
 	Times,
-	Multiply,
 	Slash,
 	Caret,
 	LParen,
@@ -291,7 +290,7 @@ fn parse_expr_binop_mul(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
 		left_associative(
 			alt((
-				tag(Token::Multiply).map(|t: TokenStream| t.0.get(0).unwrap()),
+				tag(Token::Times).map(|t: TokenStream| t.0.get(0).unwrap()),
 				tag(Token::Slash).map(|t: TokenStream| t.0.get(0).unwrap()),
 			)),
 			parse_expr_binop_exp,
