@@ -11,8 +11,8 @@ use nom::{
 	error::{Error as NomError, ParseError},
 	multi::{many0, many1},
 	sequence::{delimited, pair, separated_pair},
-	AsChar, Finish, IResult, InputIter, InputLength, InputTakeAtPosition,
-	Needed, Parser, Slice,
+	AsChar, Finish, IResult, InputIter, InputLength, InputTake,
+	InputTakeAtPosition, Needed, Parser, Slice,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,6 +64,15 @@ impl<'a> InputIter for TokenStream<'a> {
 		} else {
 			Err(Needed::new(count - self.0.len()))
 		}
+	}
+}
+
+impl InputTake for TokenStream<'_> {
+	fn take(&self, count: usize) -> Self { self.0[0..count].into() }
+
+	fn take_split(&self, count: usize) -> (Self, Self) {
+		let (l, r) = self.0.split_at(count);
+		(r.into(), l.into())
 	}
 }
 
