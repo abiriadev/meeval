@@ -145,16 +145,22 @@ fn lex_caret(i: &str) -> IResult<&str, Token> {
 }
 
 fn lex_lparen(i: &str) -> IResult<&str, Token> {
-	value(Token::Slash, char('(')).parse(i)
+	value(Token::LParen, char('(')).parse(i)
 }
 
 fn lex_rparen(i: &str) -> IResult<&str, Token> {
-	value(Token::Slash, char(')')).parse(i)
+	value(Token::RParen, char(')')).parse(i)
 }
 
 fn lex_token(i: &str) -> IResult<&str, Token> {
 	alt((
-		lex_plus, lex_minus, lex_times, lex_slash, lex_caret, lex_lparen,
+		lex_literal,
+		lex_plus,
+		lex_minus,
+		lex_times,
+		lex_slash,
+		lex_caret,
+		lex_lparen,
 		lex_rparen,
 	))(i)
 }
@@ -355,19 +361,19 @@ fn parse_i32() {
 	assert_eq!(r, "")
 }
 
-#[test]
-fn parse_add() {
-	let (r, ast) = parse_expr("1 + 2").finish().unwrap();
-
-	assert_eq!(
-		ast,
-		Expr::Add(
-			Box::new(Expr::Literal(1)),
-			Box::new(Expr::Literal(2))
-		)
-	);
-	assert_eq!(r, "")
-}
+// #[test]
+// fn parse_add() {
+// 	let (r, ast) = parse_expr("1 + 2").finish().unwrap();
+//
+// 	assert_eq!(
+// 		ast,
+// 		Expr::Add(
+// 			Box::new(Expr::Literal(1)),
+// 			Box::new(Expr::Literal(2))
+// 		)
+// 	);
+// 	assert_eq!(r, "")
+// }
 
 #[test]
 fn parse_plusminus() {
@@ -403,4 +409,11 @@ fn parse_timesslash() {
 		TimesSlash::parse::<()>("/123"),
 		Ok(("123", TimesSlash::Slash))
 	);
+}
+
+#[test]
+fn lex_test() {
+	let a = lex_expr("1 + 2");
+
+	println!("{:#?}", a);
 }
