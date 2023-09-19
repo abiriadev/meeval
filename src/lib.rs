@@ -204,3 +204,21 @@ fn parse_plusminus() {
 		Ok(("123", PlusMinus::Minus))
 	);
 }
+
+#[test]
+fn parse_timesslash() {
+	assert_eq!(
+		TimesSlash::parse("123"),
+		Err(nom::Err::Error(()))
+	);
+
+	assert_eq!(
+		TimesSlash::parse::<()>("*123"),
+		Ok(("123", TimesSlash::Times))
+	);
+
+	assert_eq!(
+		TimesSlash::parse::<()>("/123"),
+		Ok(("123", TimesSlash::Slash))
+	);
+}
