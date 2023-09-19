@@ -19,3 +19,8 @@ fn mul_multiple_times() {
 fn div_multiple_times() {
 	assert_eq!(eval("24 / 2 / 3 / 2"), Ok(2));
 }
+
+#[test]
+fn exp_multiple_times() {
+	assert_eq!(eval("2 ^ 2 ^ 2 ^ 2"), Ok(65536));
+}

@@ -11,6 +11,11 @@ fn mul_two_parens() {
 }
 
 #[test]
+fn power_of_paren() {
+	assert_eq!(eval("3 ^ (15 - 10)"), Ok(243));
+}
+
+#[test]
 fn nested() {
 	assert_eq!(
 		eval("((34) + ((89) + ((11) + ((43) + (89)))))"),

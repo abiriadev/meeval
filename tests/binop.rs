@@ -19,3 +19,8 @@ fn mul() {
 fn div() {
 	assert_eq!(eval("1 / 2"), Ok(0));
 }
+
+#[test]
+fn exp() {
+	assert_eq!(eval("2 ^ 3"), Ok(8));
+}
