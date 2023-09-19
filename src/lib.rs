@@ -6,7 +6,7 @@ use std::{
 
 use nom::{
 	branch::alt,
-	bytes::complete::take,
+	bytes::complete::{tag, take},
 	character::complete::{char, i32, multispace0},
 	combinator::{all_consuming, value, verify},
 	error::{Error as NomError, ParseError},
@@ -33,7 +33,7 @@ impl InputLength for Token {
 	fn input_len(&self) -> usize { 1 }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct TokenStream<'a>(&'a [Token]);
 
 impl AsRef<[Token]> for TokenStream<'_> {
@@ -244,26 +244,36 @@ fn parse_number_i32(i: &str) -> IResult<&str, Expr> {
 		.parse(i)
 }
 
-fn parse_literal(i: TokenStream) -> IResult<TokenStream, Token> {
+fn parse_literal(i: TokenStream) -> IResult<TokenStream, Expr> {
 	verify(take(1usize), |t: &TokenStream| {
 		matches!(t.0.get(0).unwrap(), Token::Literal(..))
 	})
-	.map(|ts: TokenStream| ts.0.get(0).unwrap().clone())
+	.map(
+		|ts: TokenStream| match ts.0.get(0).unwrap() {
+			Token::Literal(l) => Expr::Literal(*l),
+			_ => unreachable!(),
+		},
+	)
 	.parse(i)
 }
 
-fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
+fn parse_expr_atom(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
-		parse_number_i32,
-		delimited(char('('), parse_expr, char(')')),
+		// parse_number_i32,
+		parse_literal,
+		delimited(
+			tag(Token::LParen),
+			parse_expr,
+			tag(Token::RParen),
+		),
 	))(i)
 }
 
-fn parse_expr_binop_exp(i: &str) -> IResult<&str, Expr> {
+fn parse_expr_binop_exp(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
 		separated_pair(
 			parse_expr_atom,
-			ws(char('^')),
+			tag(Token::Caret),
 			parse_expr_binop_exp,
 		)
 		.map(|(left, right)| Expr::Exp(Box::new(left), Box::new(right))),
@@ -271,35 +281,45 @@ fn parse_expr_binop_exp(i: &str) -> IResult<&str, Expr> {
 	))(i)
 }
 
-fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
+fn parse_expr_binop_mul(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
 		left_associative(
-			ws(TimesSlash::parse),
+			alt((
+				tag(Token::Multiply).map(|t: TokenStream| t.0.get(0).unwrap()),
+				tag(Token::Slash).map(|t: TokenStream| t.0.get(0).unwrap()),
+			)),
 			parse_expr_binop_exp,
 			|left, (op, right)| match op {
-				TimesSlash::Times => Expr::Mul(Box::new(left), Box::new(right)),
-				TimesSlash::Slash => Expr::Div(Box::new(left), Box::new(right)),
+				Token::Times => Expr::Mul(Box::new(left), Box::new(right)),
+				Token::Slash => Expr::Div(Box::new(left), Box::new(right)),
+				_ => unreachable!(),
 			},
 		),
 		parse_expr_binop_exp,
 	))(i)
 }
 
-fn parse_expr_binop_add(i: &str) -> IResult<&str, Expr> {
+fn parse_expr_binop_add(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
 		left_associative(
-			ws(PlusMinus::parse),
+			alt((
+				tag(Token::Plus).map(|t: TokenStream| t.0.get(0).unwrap()),
+				tag(Token::Minus).map(|t: TokenStream| t.0.get(0).unwrap()),
+			)),
 			parse_expr_binop_mul,
 			|left, (op, right)| match op {
-				PlusMinus::Plus => Expr::Add(Box::new(left), Box::new(right)),
-				PlusMinus::Minus => Expr::Sub(Box::new(left), Box::new(right)),
+				Token::Plus => Expr::Add(Box::new(left), Box::new(right)),
+				Token::Minus => Expr::Sub(Box::new(left), Box::new(right)),
+				_ => unreachable!(),
 			},
 		),
 		parse_expr_binop_mul,
 	))(i)
 }
 
-fn parse_expr(i: &str) -> IResult<&str, Expr> { parse_expr_binop_add(i) }
+fn parse_expr(i: TokenStream) -> IResult<TokenStream, Expr> {
+	parse_expr_binop_add(i)
+}
 
 fn eval_ast(ast: Expr) -> i32 {
 	match ast {
@@ -314,11 +334,15 @@ fn eval_ast(ast: Expr) -> i32 {
 }
 
 pub fn eval(expression: &str) -> Result<i32, NomError<&str>> {
-	Ok(eval_ast(
-		all_consuming(ws(parse_expr))(expression)
-			.finish()?
+	let ts = lex_expr(expression).unwrap().1;
+
+	let x = Ok(eval_ast(
+		all_consuming(parse_expr)(TokenStream(&ts))
+			.finish()
+			.unwrap()
 			.1,
-	))
+	));
+	x
 }
 
 #[test]
