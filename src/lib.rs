@@ -15,6 +15,7 @@ enum Token {
 	Minus,
 	Times,
 	Multiply,
+	Slash,
 	Caret,
 	LParen,
 	RParen,
