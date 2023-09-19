@@ -3,8 +3,8 @@ use nom::{
 	character::complete::{char, i32, multispace0},
 	combinator::{all_consuming, value},
 	error::{Error as NomError, ParseError},
-	multi::many1,
-	sequence::{delimited, pair, separated_pair},
+	multi::{many0, many1},
+	sequence::{delimited, pair, preceded, separated_pair},
 	AsChar, Finish, IResult, InputLength, InputTakeAtPosition, Parser,
 };
 
@@ -71,6 +71,15 @@ fn lex_lparen(i: &str) -> IResult<&str, Token> {
 fn lex_rparen(i: &str) -> IResult<&str, Token> {
 	value(Token::Slash, char(')')).parse(i)
 }
+
+fn lex_token(i: &str) -> IResult<&str, Token> {
+	alt((
+		lex_plus, lex_minus, lex_times, lex_slash, lex_caret, lex_lparen,
+		lex_rparen,
+	))(i)
+}
+
+fn lex_expr(i: &str) -> IResult<&str, Vec<Token>> { many0(ws(lex_token))(i) }
 
 impl<'a, E> Parser<&'a str, Self, E> for PlusMinus
 where E: ParseError<&'a str>
