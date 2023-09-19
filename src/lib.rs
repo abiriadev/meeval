@@ -77,17 +77,19 @@ impl TimesSlash {
 	}
 }
 
-fn left_associative<I, O, E, P, O2, P2>(
+fn left_associative<I, O, E, P, O2, P2, F>(
 	op: P2,
 	p: P,
-) -> impl Parser<I, (O, Vec<(O2, O)>), E>
+	f: F,
+) -> impl Parser<I, O, E>
 where
 	I: Clone + InputLength,
 	E: ParseError<I>,
 	P: Parser<I, O, E> + Copy,
 	P2: Parser<I, O2, E>,
+	F: Fn(O, (O2, O)) -> O + Copy,
 {
-	pair(p, many1(pair(op, p)))
+	pair(p, many1(pair(op, p))).map(move |(a, r)| r.into_iter().fold(a, f))
 }
 
 fn ws<I, O, E, P>(p: P) -> impl Parser<I, O, E>
@@ -113,15 +115,12 @@ fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
 
 fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 	alt((
-		left_associative(ws(TimesSlash::parse), parse_expr_atom).map(
-			|(first, rest)| {
-				rest.into_iter()
-					.fold(first, |left, (op, right)| match op {
-						TimesSlash::Times =>
-							Expr::Mul(Box::new(left), Box::new(right)),
-						TimesSlash::Slash =>
-							Expr::Div(Box::new(left), Box::new(right)),
-					})
+		left_associative(
+			ws(TimesSlash::parse),
+			parse_expr_atom,
+			|left, (op, right)| match op {
+				TimesSlash::Times => Expr::Mul(Box::new(left), Box::new(right)),
+				TimesSlash::Slash => Expr::Div(Box::new(left), Box::new(right)),
 			},
 		),
 		parse_expr_atom,
@@ -133,16 +132,11 @@ fn parse_expr_binop_add(i: &str) -> IResult<&str, Expr> {
 		left_associative(
 			ws(PlusMinus::parse),
 			parse_expr_binop_mul,
-		)
-		.map(|(first, rest)| {
-			rest.into_iter()
-				.fold(first, |left, (op, right)| match op {
-					PlusMinus::Plus =>
-						Expr::Add(Box::new(left), Box::new(right)),
-					PlusMinus::Minus =>
-						Expr::Sub(Box::new(left), Box::new(right)),
-				})
-		}),
+			|left, (op, right)| match op {
+				PlusMinus::Plus => Expr::Add(Box::new(left), Box::new(right)),
+				PlusMinus::Minus => Expr::Sub(Box::new(left), Box::new(right)),
+			},
+		),
 		parse_expr_binop_mul,
 	))(i)
 }
