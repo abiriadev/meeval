@@ -1,3 +1,5 @@
+use std::ops::{Index, RangeFrom};
+
 use nom::{
 	branch::alt,
 	character::complete::{char, i32, multispace0},
@@ -5,7 +7,7 @@ use nom::{
 	error::{Error as NomError, ParseError},
 	multi::{many0, many1},
 	sequence::{delimited, pair, preceded, separated_pair},
-	AsChar, Finish, IResult, InputLength, InputTakeAtPosition, Parser,
+	AsChar, Finish, IResult, InputLength, InputTakeAtPosition, Parser, Slice,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,6 +24,14 @@ enum Token {
 }
 
 struct TokenStream<'a>(&'a [Token]);
+
+impl AsRef<[Token]> for TokenStream<'_> {
+	fn as_ref(&self) -> &[Token] { self.0 }
+}
+
+impl<'a> From<&'a [Token]> for TokenStream<'a> {
+	fn from(value: &'a [Token]) -> Self { Self(value) }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 enum Expr {
