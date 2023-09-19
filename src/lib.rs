@@ -11,6 +11,7 @@ use nom::{
 #[derive(Debug, PartialEq, Eq)]
 enum Expr {
 	Literal(i32),
+	Exp(Box<Expr>, Box<Expr>),
 	Add(Box<Expr>, Box<Expr>),
 	Sub(Box<Expr>, Box<Expr>),
 	Mul(Box<Expr>, Box<Expr>),
@@ -146,6 +147,8 @@ fn parse_expr(i: &str) -> IResult<&str, Expr> { parse_expr_binop_add(i) }
 fn eval_ast(ast: Expr) -> i32 {
 	match ast {
 		Expr::Literal(i) => i,
+		// TODO: support native floating points someday
+		Expr::Exp(a, b) => (eval_ast(*a) as f64).powi(eval_ast(*b)) as i32,
 		Expr::Add(a, b) => eval_ast(*a) + eval_ast(*b),
 		Expr::Sub(a, b) => eval_ast(*a) - eval_ast(*b),
 		Expr::Mul(a, b) => eval_ast(*a) * eval_ast(*b),
