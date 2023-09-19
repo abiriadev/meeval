@@ -28,6 +28,10 @@ enum Token {
 	RParen,
 }
 
+impl InputLength for Token {
+	fn input_len(&self) -> usize { 1 }
+}
+
 struct TokenStream<'a>(&'a [Token]);
 
 impl AsRef<[Token]> for TokenStream<'_> {
