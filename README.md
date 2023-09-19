@@ -5,7 +5,7 @@
 - [x] Elementary operations (`+`, `-`, `*`, `/`)
     - [x] Parantheses
 - [ ] Extended operations
-    - [ ] Exponentials
+    - [x] Exponentials
     - [ ] Roots
     - [ ] Factorials
 - [ ] First-class floating point support
