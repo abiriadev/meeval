@@ -1,6 +1,6 @@
 use nom::{
 	branch::alt,
-	character::complete::{char, i32, multispace0, one_of},
+	character::complete::{char, i32, multispace0},
 	combinator::{all_consuming, value},
 	error::{Error as NomError, ParseError},
 	multi::many1,
