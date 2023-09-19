@@ -23,10 +23,10 @@ enum PlusMinus {
 	Minus = '-' as isize,
 }
 
-impl<'a, E> Parser<&'a str, PlusMinus, E> for PlusMinus
+impl<'a, E> Parser<&'a str, Self, E> for PlusMinus
 where E: ParseError<&'a str>
 {
-	fn parse(&mut self, input: &'a str) -> IResult<&'a str, PlusMinus, E> {
+	fn parse(&mut self, input: &'a str) -> IResult<&'a str, Self, E> {
 		alt((
 			value(
 				Self::Plus,
@@ -43,13 +43,38 @@ where E: ParseError<&'a str>
 impl PlusMinus {
 	fn parse<'a, E>(input: &'a str) -> IResult<&'a str, Self, E>
 	where E: ParseError<&'a str> {
-		PlusMinus::Plus.parse(input)
+		Self::Plus.parse(input)
 	}
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum TimesSlash {
-	Times,
-	Slash,
+	Times = '*' as isize,
+	Slash = '/' as isize,
+}
+
+impl<'a, E> Parser<&'a str, Self, E> for TimesSlash
+where E: ParseError<&'a str>
+{
+	fn parse(&mut self, input: &'a str) -> IResult<&'a str, Self, E> {
+		alt((
+			value(
+				Self::Times,
+				char(Self::Times as u8 as char),
+			),
+			value(
+				Self::Slash,
+				char(Self::Slash as u8 as char),
+			),
+		))(input)
+	}
+}
+
+impl TimesSlash {
+	fn parse<'a, E>(input: &'a str) -> IResult<&'a str, Self, E>
+	where E: ParseError<&'a str> {
+		Self::Times.parse(input)
+	}
 }
 
 fn left_associative<I, O, E, P, O2, P2>(
