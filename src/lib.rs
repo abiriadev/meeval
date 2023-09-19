@@ -113,13 +113,14 @@ fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
 
 fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 	alt((
-		left_associative(ws(one_of("*/")), parse_expr_atom).map(
+		left_associative(ws(TimesSlash::parse), parse_expr_atom).map(
 			|(first, rest)| {
 				rest.into_iter()
 					.fold(first, |left, (op, right)| match op {
-						'*' => Expr::Mul(Box::new(left), Box::new(right)),
-						'/' => Expr::Div(Box::new(left), Box::new(right)),
-						_ => unreachable!(),
+						TimesSlash::Times =>
+							Expr::Mul(Box::new(left), Box::new(right)),
+						TimesSlash::Slash =>
+							Expr::Div(Box::new(left), Box::new(right)),
 					})
 			},
 		),
@@ -129,16 +130,19 @@ fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 
 fn parse_expr_binop_add(i: &str) -> IResult<&str, Expr> {
 	alt((
-		left_associative(ws(one_of("+-")), parse_expr_binop_mul).map(
-			|(first, rest)| {
-				rest.into_iter()
-					.fold(first, |left, (op, right)| match op {
-						'+' => Expr::Add(Box::new(left), Box::new(right)),
-						'-' => Expr::Sub(Box::new(left), Box::new(right)),
-						_ => unreachable!(),
-					})
-			},
-		),
+		left_associative(
+			ws(PlusMinus::parse),
+			parse_expr_binop_mul,
+		)
+		.map(|(first, rest)| {
+			rest.into_iter()
+				.fold(first, |left, (op, right)| match op {
+					PlusMinus::Plus =>
+						Expr::Add(Box::new(left), Box::new(right)),
+					PlusMinus::Minus =>
+						Expr::Sub(Box::new(left), Box::new(right)),
+				})
+		}),
 		parse_expr_binop_mul,
 	))(i)
 }
