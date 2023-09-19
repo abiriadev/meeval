@@ -11,8 +11,8 @@ use nom::{
 	error::{Error as NomError, ParseError},
 	multi::{many0, many1},
 	sequence::{delimited, pair, separated_pair},
-	AsChar, Finish, IResult, InputIter, InputLength, InputTake,
-	InputTakeAtPosition, Needed, Parser, Slice,
+	AsChar, Compare, CompareResult, Finish, IResult, InputIter, InputLength,
+	InputTake, InputTakeAtPosition, Needed, Parser, Slice,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,6 +74,23 @@ impl InputTake for TokenStream<'_> {
 		let (l, r) = self.0.split_at(count);
 		(r.into(), l.into())
 	}
+}
+
+impl Compare<Token> for TokenStream<'_> {
+	fn compare(&self, t: Token) -> CompareResult {
+		self.0
+			.get(0)
+			.map(|f| {
+				if *f == t {
+					CompareResult::Ok
+				} else {
+					CompareResult::Error
+				}
+			})
+			.unwrap_or(CompareResult::Incomplete)
+	}
+
+	fn compare_no_case(&self, t: Token) -> CompareResult { self.compare(t) }
 }
 
 #[derive(Debug, PartialEq, Eq)]
