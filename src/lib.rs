@@ -1,4 +1,8 @@
-use std::ops::{Index, RangeFrom};
+use std::{
+	iter::Enumerate,
+	ops::{Index, RangeFrom},
+	slice::Iter,
+};
 
 use nom::{
 	branch::alt,
@@ -6,8 +10,9 @@ use nom::{
 	combinator::{all_consuming, value},
 	error::{Error as NomError, ParseError},
 	multi::{many0, many1},
-	sequence::{delimited, pair, preceded, separated_pair},
-	AsChar, Finish, IResult, InputLength, InputTakeAtPosition, Parser, Slice,
+	sequence::{delimited, pair, separated_pair},
+	AsChar, Finish, IResult, InputIter, InputLength, InputTakeAtPosition,
+	Needed, Parser, Slice,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,6 +36,35 @@ impl AsRef<[Token]> for TokenStream<'_> {
 
 impl<'a> From<&'a [Token]> for TokenStream<'a> {
 	fn from(value: &'a [Token]) -> Self { Self(value) }
+}
+
+impl Slice<RangeFrom<usize>> for TokenStream<'_> {
+	fn slice(&self, range: RangeFrom<usize>) -> Self {
+		self.0.index(range).into()
+	}
+}
+
+impl<'a> InputIter for TokenStream<'a> {
+	type Item = &'a Token;
+	type Iter = Enumerate<Self::IterElem>;
+	type IterElem = Iter<'a, Token>;
+
+	fn iter_indices(&self) -> Self::Iter { self.0.iter().enumerate() }
+
+	fn iter_elements(&self) -> Self::IterElem { self.0.iter() }
+
+	fn position<P>(&self, predicate: P) -> Option<usize>
+	where P: Fn(Self::Item) -> bool {
+		self.iter_elements().position(predicate)
+	}
+
+	fn slice_index(&self, count: usize) -> Result<usize, Needed> {
+		if self.0.len() >= count {
+			Ok(count)
+		} else {
+			Err(Needed::new(count - self.0.len()))
+		}
+	}
 }
 
 #[derive(Debug, PartialEq, Eq)]
