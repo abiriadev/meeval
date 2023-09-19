@@ -39,6 +39,39 @@ enum PlusMinus {
 	Minus = '-' as isize,
 }
 
+fn lex_literal(i: &str) -> IResult<&str, Token> {
+	i32.map(|int| Token::Literal(int))
+		.parse(i)
+}
+
+fn lex_plus(i: &str) -> IResult<&str, Token> {
+	value(Token::Plus, char('+')).parse(i)
+}
+
+fn lex_minus(i: &str) -> IResult<&str, Token> {
+	value(Token::Minus, char('-')).parse(i)
+}
+
+fn lex_times(i: &str) -> IResult<&str, Token> {
+	value(Token::Times, char('*')).parse(i)
+}
+
+fn lex_slash(i: &str) -> IResult<&str, Token> {
+	value(Token::Slash, char('/')).parse(i)
+}
+
+fn lex_caret(i: &str) -> IResult<&str, Token> {
+	value(Token::Caret, char('^')).parse(i)
+}
+
+fn lex_lparen(i: &str) -> IResult<&str, Token> {
+	value(Token::Slash, char('(')).parse(i)
+}
+
+fn lex_rparen(i: &str) -> IResult<&str, Token> {
+	value(Token::Slash, char(')')).parse(i)
+}
+
 impl<'a, E> Parser<&'a str, Self, E> for PlusMinus
 where E: ParseError<&'a str>
 {
