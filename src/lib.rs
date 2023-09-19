@@ -6,8 +6,9 @@ use std::{
 
 use nom::{
 	branch::alt,
+	bytes::complete::take,
 	character::complete::{char, i32, multispace0},
-	combinator::{all_consuming, value},
+	combinator::{all_consuming, value, verify},
 	error::{Error as NomError, ParseError},
 	multi::{many0, many1},
 	sequence::{delimited, pair, separated_pair},
@@ -32,6 +33,7 @@ impl InputLength for Token {
 	fn input_len(&self) -> usize { 1 }
 }
 
+#[derive(Clone)]
 struct TokenStream<'a>(&'a [Token]);
 
 impl AsRef<[Token]> for TokenStream<'_> {
@@ -240,6 +242,14 @@ where
 fn parse_number_i32(i: &str) -> IResult<&str, Expr> {
 	i32.map(|int| Expr::Literal(int))
 		.parse(i)
+}
+
+fn parse_literal(i: TokenStream) -> IResult<TokenStream, Token> {
+	verify(take(1usize), |t: &TokenStream| {
+		matches!(t.0.get(0).unwrap(), Token::Literal(..))
+	})
+	.map(|ts: TokenStream| ts.0.get(0).unwrap().clone())
+	.parse(i)
 }
 
 fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
