@@ -4,7 +4,7 @@ use nom::{
 	combinator::{all_consuming, value},
 	error::{Error as NomError, ParseError},
 	multi::many1,
-	sequence::{delimited, pair},
+	sequence::{delimited, pair, separated_pair},
 	AsChar, Finish, IResult, InputLength, InputTakeAtPosition, Parser,
 };
 
@@ -114,17 +114,29 @@ fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
 	))(i)
 }
 
+fn parse_expr_binop_exp(i: &str) -> IResult<&str, Expr> {
+	alt((
+		separated_pair(
+			parse_expr_atom,
+			char('^'),
+			parse_expr_binop_exp,
+		)
+		.map(|(left, right)| Expr::Exp(Box::new(left), Box::new(right))),
+		parse_expr_atom,
+	))(i)
+}
+
 fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 	alt((
 		left_associative(
 			ws(TimesSlash::parse),
-			parse_expr_atom,
+			parse_expr_binop_exp,
 			|left, (op, right)| match op {
 				TimesSlash::Times => Expr::Mul(Box::new(left), Box::new(right)),
 				TimesSlash::Slash => Expr::Div(Box::new(left), Box::new(right)),
 			},
 		),
-		parse_expr_atom,
+		parse_expr_binop_exp,
 	))(i)
 }
 
