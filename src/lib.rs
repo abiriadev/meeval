@@ -413,7 +413,12 @@ fn parse_timesslash() {
 
 #[test]
 fn lex_test() {
-	let a = lex_expr("1 + 2");
-
-	println!("{:#?}", a);
+	assert_eq!(
+		lex_expr("1 + 2"),
+		Ok(("", vec![
+			Token::Literal(1),
+			Token::Plus,
+			Token::Literal(2),
+		]))
+	);
 }
