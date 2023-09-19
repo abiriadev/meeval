@@ -1,6 +1,6 @@
 use nom::{
 	branch::alt,
-	character::complete::{i32, multispace0, one_of},
+	character::complete::{char, i32, multispace0, one_of},
 	combinator::all_consuming,
 	error::{Error as NomError, ParseError},
 	multi::many1,
@@ -45,7 +45,10 @@ fn parse_number_i32(i: &str) -> IResult<&str, Expr> {
 }
 
 fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
-	alt((parse_number_i32,))(i)
+	alt((
+		parse_number_i32,
+		delimited(char('('), parse_expr, char(')')),
+	))(i)
 }
 
 fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
