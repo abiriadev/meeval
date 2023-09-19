@@ -42,6 +42,10 @@ impl<'a> From<&'a [Token]> for TokenStream<'a> {
 	fn from(value: &'a [Token]) -> Self { Self(value) }
 }
 
+impl InputLength for TokenStream<'_> {
+	fn input_len(&self) -> usize { self.0.len() }
+}
+
 impl Slice<RangeFrom<usize>> for TokenStream<'_> {
 	fn slice(&self, range: RangeFrom<usize>) -> Self {
 		self.0.index(range).into()
