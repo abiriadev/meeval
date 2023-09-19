@@ -118,7 +118,7 @@ fn parse_expr_binop_exp(i: &str) -> IResult<&str, Expr> {
 	alt((
 		separated_pair(
 			parse_expr_atom,
-			char('^'),
+			ws(char('^')),
 			parse_expr_binop_exp,
 		)
 		.map(|(left, right)| Expr::Exp(Box::new(left), Box::new(right))),
