@@ -1,7 +1,7 @@
 use nom::{
 	branch::alt,
 	character::complete::{char, i32, multispace0, one_of},
-	combinator::all_consuming,
+	combinator::{all_consuming, value},
 	error::{Error as NomError, ParseError},
 	multi::many1,
 	sequence::{delimited, pair},
@@ -15,6 +15,41 @@ enum Expr {
 	Sub(Box<Expr>, Box<Expr>),
 	Mul(Box<Expr>, Box<Expr>),
 	Div(Box<Expr>, Box<Expr>),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PlusMinus {
+	Plus = '+' as isize,
+	Minus = '-' as isize,
+}
+
+impl<'a, E> Parser<&'a str, PlusMinus, E> for PlusMinus
+where E: ParseError<&'a str>
+{
+	fn parse(&mut self, input: &'a str) -> IResult<&'a str, PlusMinus, E> {
+		alt((
+			value(
+				Self::Plus,
+				char(Self::Plus as u8 as char),
+			),
+			value(
+				Self::Minus,
+				char(Self::Minus as u8 as char),
+			),
+		))(input)
+	}
+}
+
+impl PlusMinus {
+	fn parse<'a, E>(input: &'a str) -> IResult<&'a str, Self, E>
+	where E: ParseError<&'a str> {
+		PlusMinus::Plus.parse(input)
+	}
+}
+
+enum TimesSlash {
+	Times,
+	Slash,
 }
 
 fn left_associative<I, O, E, P, O2, P2>(
