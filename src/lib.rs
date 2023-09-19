@@ -8,6 +8,20 @@ use nom::{
 	AsChar, Finish, IResult, InputLength, InputTakeAtPosition, Parser,
 };
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Token {
+	Literal(i32),
+	Plus,
+	Minus,
+	Times,
+	Multiply,
+	Caret,
+	LParen,
+	RParen,
+}
+
+struct TokenStream<'a>(&'a [Token]);
+
 #[derive(Debug, PartialEq, Eq)]
 enum Expr {
 	Literal(i32),
