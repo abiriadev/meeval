@@ -161,3 +161,21 @@ fn parse_add() {
 	);
 	assert_eq!(r, "")
 }
+
+#[test]
+fn parse_plusminus() {
+	assert_eq!(
+		PlusMinus::parse("123"),
+		Err(nom::Err::Error(()))
+	);
+
+	assert_eq!(
+		PlusMinus::parse::<()>("+123"),
+		Ok(("123", PlusMinus::Plus))
+	);
+
+	assert_eq!(
+		PlusMinus::parse::<()>("-123"),
+		Ok(("123", PlusMinus::Minus))
+	);
+}
