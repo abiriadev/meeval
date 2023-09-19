@@ -1,10 +1,11 @@
 use nom::{
 	branch::alt,
-	character::complete::{char, i32, multispace0},
+	character::complete::{i32, multispace0, one_of},
 	combinator::all_consuming,
 	error::{Error as NomError, ParseError},
-	sequence::{delimited, separated_pair},
-	AsChar, Finish, IResult, InputTakeAtPosition, Parser,
+	multi::many1,
+	sequence::{delimited, pair},
+	AsChar, Finish, IResult, InputLength, InputTakeAtPosition, Parser,
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -14,6 +15,19 @@ enum Expr {
 	Sub(Box<Expr>, Box<Expr>),
 	Mul(Box<Expr>, Box<Expr>),
 	Div(Box<Expr>, Box<Expr>),
+}
+
+fn left_associative<I, O, E, P, O2, P2>(
+	op: P2,
+	p: P,
+) -> impl Parser<I, (O, Vec<(O2, O)>), E>
+where
+	I: Clone + InputLength,
+	E: ParseError<I>,
+	P: Parser<I, O, E> + Copy,
+	P2: Parser<I, O2, E>,
+{
+	pair(p, many1(pair(op, p)))
 }
 
 fn ws<I, O, E, P>(p: P) -> impl Parser<I, O, E>
@@ -36,36 +50,32 @@ fn parse_expr_atom(i: &str) -> IResult<&str, Expr> {
 
 fn parse_expr_binop_mul(i: &str) -> IResult<&str, Expr> {
 	alt((
-		separated_pair(
-			parse_expr_binop_mul,
-			ws(char('*')),
-			parse_expr_atom,
-		)
-		.map(|(ex1, ex2)| Expr::Mul(Box::new(ex1), Box::new(ex2))),
-		separated_pair(
-			parse_expr_binop_mul,
-			ws(char('/')),
-			parse_expr_atom,
-		)
-		.map(|(ex1, ex2)| Expr::Div(Box::new(ex1), Box::new(ex2))),
+		left_associative(ws(one_of("*/")), parse_expr_atom).map(
+			|(first, rest)| {
+				rest.into_iter()
+					.fold(first, |left, (op, right)| match op {
+						'*' => Expr::Mul(Box::new(left), Box::new(right)),
+						'/' => Expr::Div(Box::new(left), Box::new(right)),
+						_ => unreachable!(),
+					})
+			},
+		),
 		parse_expr_atom,
 	))(i)
 }
 
 fn parse_expr_binop_add(i: &str) -> IResult<&str, Expr> {
 	alt((
-		separated_pair(
-			parse_expr_binop_add,
-			ws(char('+')),
-			parse_expr_binop_mul,
-		)
-		.map(|(ex1, ex2)| Expr::Add(Box::new(ex1), Box::new(ex2))),
-		separated_pair(
-			parse_expr_binop_add,
-			ws(char('-')),
-			parse_expr_binop_mul,
-		)
-		.map(|(ex1, ex2)| Expr::Sub(Box::new(ex1), Box::new(ex2))),
+		left_associative(ws(one_of("+-")), parse_expr_binop_mul).map(
+			|(first, rest)| {
+				rest.into_iter()
+					.fold(first, |left, (op, right)| match op {
+						'+' => Expr::Add(Box::new(left), Box::new(right)),
+						'-' => Expr::Sub(Box::new(left), Box::new(right)),
+						_ => unreachable!(),
+					})
+			},
+		),
 		parse_expr_binop_mul,
 	))(i)
 }
