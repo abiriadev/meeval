@@ -354,38 +354,42 @@ fn parse_i32() {
 #[test]
 fn parse_plusminus() {
 	assert_eq!(
-		PlusMinus::parse(TokenStream(&lex_expr("123").unwrap().1)),
+		PlusMinus::parse([Token::Literal(123)].as_slice().into()),
 		Err(nom::Err::Error(()))
 	);
 
 	assert_eq!(
-		PlusMinus::parse::<()>(TokenStream(
-			&lex_expr("+123").unwrap().1
-		)),
-		Ok(("123", PlusMinus::Plus))
+		PlusMinus::parse::<()>([Token::Plus].as_slice().into()),
+		Ok(([].as_slice().into(), PlusMinus::Plus))
 	);
 
 	assert_eq!(
-		PlusMinus::parse::<()>("-123"),
-		Ok(("123", PlusMinus::Minus))
+		PlusMinus::parse::<()>([Token::Minus].as_slice().into()),
+		Ok(([].as_slice().into(), PlusMinus::Minus))
 	);
 }
 
 #[test]
 fn parse_asteriskslash() {
 	assert_eq!(
-		AsteriskSlash::parse("123"),
+		AsteriskSlash::parse([Token::Literal(123)].as_slice().into()),
 		Err(nom::Err::Error(()))
 	);
 
 	assert_eq!(
-		AsteriskSlash::parse::<()>("*123"),
-		Ok(("123", AsteriskSlash::Asterisk))
+		AsteriskSlash::parse::<()>([Token::Asterisk].as_slice().into()),
+		Ok((
+			[].as_slice().into(),
+			AsteriskSlash::Asterisk
+		))
 	);
 
 	assert_eq!(
-		AsteriskSlash::parse::<()>("/123"),
-		Ok(("123", AsteriskSlash::Slash))
+		AsteriskSlash::parse::<()>([Token::Slash].as_slice().into()),
+		Ok((
+			[].as_slice().into(),
+			AsteriskSlash::Slash
+		))
 	);
 }
 
