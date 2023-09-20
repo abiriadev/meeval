@@ -163,61 +163,36 @@ fn lex_expr(i: &str) -> IResult<&str, Vec<Token>> { many0(ws(lex_token))(i) }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PlusMinus {
-	Plus = '+' as isize,
-	Minus = '-' as isize,
-}
-
-impl<'a, E> Parser<&'a str, Self, E> for PlusMinus
-where E: ParseError<&'a str>
-{
-	fn parse(&mut self, input: &'a str) -> IResult<&'a str, Self, E> {
-		alt((
-			value(
-				Self::Plus,
-				char(Self::Plus as u8 as char),
-			),
-			value(
-				Self::Minus,
-				char(Self::Minus as u8 as char),
-			),
-		))(input)
-	}
+	Plus,
+	Minus,
 }
 
 impl PlusMinus {
-	fn parse<'a, E>(input: &'a str) -> IResult<&'a str, Self, E>
-	where E: ParseError<&'a str> {
-		Self::Plus.parse(input)
+	fn parse<'a, E>(i: TokenStream<'a>) -> IResult<TokenStream<'a>, Self, E>
+	where E: ParseError<TokenStream<'a>> {
+		alt((
+			value(Self::Plus, parse_token(Token::Plus)),
+			value(Self::Minus, parse_token(Token::Minus)),
+		))(i)
 	}
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum AsteriskSlash {
-	Asterisk = '*' as isize,
-	Slash = '/' as isize,
-}
-
-impl<'a, E> Parser<&'a str, Self, E> for AsteriskSlash
-where E: ParseError<&'a str>
-{
-	fn parse(&mut self, input: &'a str) -> IResult<&'a str, Self, E> {
-		alt((
-			value(
-				Self::Asterisk,
-				char(Self::Asterisk as u8 as char),
-			),
-			value(
-				Self::Slash,
-				char(Self::Slash as u8 as char),
-			),
-		))(input)
-	}
+	Asterisk,
+	Slash,
 }
 
 impl AsteriskSlash {
-	fn parse<'a, E>(input: &'a str) -> IResult<&'a str, Self, E>
-	where E: ParseError<&'a str> {
-		Self::Asterisk.parse(input)
+	fn parse<'a, E>(i: TokenStream<'a>) -> IResult<TokenStream<'a>, Self, E>
+	where E: ParseError<TokenStream<'a>> {
+		alt((
+			value(
+				Self::Asterisk,
+				parse_token(Token::Asterisk),
+			),
+			value(Self::Slash, parse_token(Token::Slash)),
+		))(i)
 	}
 }
 
