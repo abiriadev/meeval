@@ -21,7 +21,7 @@ enum Token {
 	Literal(i32),
 	Plus,
 	Minus,
-	Times,
+	Asterisk,
 	Slash,
 	Caret,
 	LParen,
@@ -131,8 +131,8 @@ fn lex_minus(i: &str) -> IResult<&str, Token> {
 	value(Token::Minus, char('-')).parse(i)
 }
 
-fn lex_times(i: &str) -> IResult<&str, Token> {
-	value(Token::Times, char('*')).parse(i)
+fn lex_asterisk(i: &str) -> IResult<&str, Token> {
+	value(Token::Asterisk, char('*')).parse(i)
 }
 
 fn lex_slash(i: &str) -> IResult<&str, Token> {
@@ -156,7 +156,7 @@ fn lex_token(i: &str) -> IResult<&str, Token> {
 		lex_literal,
 		lex_plus,
 		lex_minus,
-		lex_times,
+		lex_asterisk,
 		lex_slash,
 		lex_caret,
 		lex_lparen,
@@ -191,19 +191,19 @@ impl PlusMinus {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum TimesSlash {
-	Times = '*' as isize,
+enum AsteriskSlash {
+	Asterisk = '*' as isize,
 	Slash = '/' as isize,
 }
 
-impl<'a, E> Parser<&'a str, Self, E> for TimesSlash
+impl<'a, E> Parser<&'a str, Self, E> for AsteriskSlash
 where E: ParseError<&'a str>
 {
 	fn parse(&mut self, input: &'a str) -> IResult<&'a str, Self, E> {
 		alt((
 			value(
-				Self::Times,
-				char(Self::Times as u8 as char),
+				Self::Asterisk,
+				char(Self::Asterisk as u8 as char),
 			),
 			value(
 				Self::Slash,
@@ -213,10 +213,10 @@ where E: ParseError<&'a str>
 	}
 }
 
-impl TimesSlash {
+impl AsteriskSlash {
 	fn parse<'a, E>(input: &'a str) -> IResult<&'a str, Self, E>
 	where E: ParseError<&'a str> {
-		Self::Times.parse(input)
+		Self::Asterisk.parse(input)
 	}
 }
 
@@ -290,12 +290,12 @@ fn parse_expr_binop_mul(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
 		left_associative(
 			alt((
-				tag(Token::Times).map(|t: TokenStream| t.0.get(0).unwrap()),
+				tag(Token::Asterisk).map(|t: TokenStream| t.0.get(0).unwrap()),
 				tag(Token::Slash).map(|t: TokenStream| t.0.get(0).unwrap()),
 			)),
 			parse_expr_binop_exp,
 			|left, (op, right)| match op {
-				Token::Times => Expr::Mul(Box::new(left), Box::new(right)),
+				Token::Asterisk => Expr::Mul(Box::new(left), Box::new(right)),
 				Token::Slash => Expr::Div(Box::new(left), Box::new(right)),
 				_ => unreachable!(),
 			},
@@ -393,20 +393,20 @@ fn parse_plusminus() {
 }
 
 #[test]
-fn parse_timesslash() {
+fn parse_asteriskslash() {
 	assert_eq!(
-		TimesSlash::parse("123"),
+		AsteriskSlash::parse("123"),
 		Err(nom::Err::Error(()))
 	);
 
 	assert_eq!(
-		TimesSlash::parse::<()>("*123"),
-		Ok(("123", TimesSlash::Times))
+		AsteriskSlash::parse::<()>("*123"),
+		Ok(("123", AsteriskSlash::Asterisk))
 	);
 
 	assert_eq!(
-		TimesSlash::parse::<()>("/123"),
-		Ok(("123", TimesSlash::Slash))
+		AsteriskSlash::parse::<()>("/123"),
+		Ok(("123", AsteriskSlash::Slash))
 	);
 }
 
