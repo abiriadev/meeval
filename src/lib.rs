@@ -337,19 +337,25 @@ fn parse_i32() {
 	assert_eq!(r, "")
 }
 
-// #[test]
-// fn parse_add() {
-// 	let (r, ast) = parse_expr("1 + 2").finish().unwrap();
-//
-// 	assert_eq!(
-// 		ast,
-// 		Expr::Add(
-// 			Box::new(Expr::Literal(1)),
-// 			Box::new(Expr::Literal(2))
-// 		)
-// 	);
-// 	assert_eq!(r, "")
-// }
+#[test]
+fn parse_add() {
+	let (r, ast) = parse_expr(
+		[Token::Literal(1), Token::Plus, Token::Literal(2)]
+			.as_slice()
+			.into(),
+	)
+	.finish()
+	.unwrap();
+
+	assert_eq!(
+		ast,
+		Expr::Add(
+			Box::new(Expr::Literal(1)),
+			Box::new(Expr::Literal(2))
+		)
+	);
+	assert_eq!(r, [].as_slice().into())
+}
 
 #[test]
 fn parse_plusminus() {
