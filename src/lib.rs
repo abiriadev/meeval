@@ -1,7 +1,6 @@
 use std::{
 	iter::Enumerate,
 	mem::discriminant,
-	num::NonZeroUsize,
 	ops::{Index, RangeFrom},
 	slice::Iter,
 };
@@ -104,16 +103,6 @@ impl Compare<Token> for TokenStream<'_> {
 	fn compare_no_case(&self, t: Token) -> CompareResult { self.compare(t) }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-enum Expr {
-	Literal(i32),
-	Exp(Box<Expr>, Box<Expr>),
-	Add(Box<Expr>, Box<Expr>),
-	Sub(Box<Expr>, Box<Expr>),
-	Mul(Box<Expr>, Box<Expr>),
-	Div(Box<Expr>, Box<Expr>),
-}
-
 fn lex_literal(i: &str) -> IResult<&str, Token> {
 	i32.map(Token::Literal).parse(i)
 }
@@ -160,6 +149,16 @@ fn lex_token(i: &str) -> IResult<&str, Token> {
 }
 
 fn lex_expr(i: &str) -> IResult<&str, Vec<Token>> { many0(ws(lex_token))(i) }
+
+#[derive(Debug, PartialEq, Eq)]
+enum Expr {
+	Literal(i32),
+	Exp(Box<Expr>, Box<Expr>),
+	Add(Box<Expr>, Box<Expr>),
+	Sub(Box<Expr>, Box<Expr>),
+	Mul(Box<Expr>, Box<Expr>),
+	Div(Box<Expr>, Box<Expr>),
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PlusMinus {
