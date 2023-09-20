@@ -112,15 +112,8 @@ enum Expr {
 	Div(Box<Expr>, Box<Expr>),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum PlusMinus {
-	Plus = '+' as isize,
-	Minus = '-' as isize,
-}
-
 fn lex_literal(i: &str) -> IResult<&str, Token> {
-	i32.map(|int| Token::Literal(int))
-		.parse(i)
+	i32.map(Token::Literal).parse(i)
 }
 
 fn lex_plus(i: &str) -> IResult<&str, Token> {
@@ -165,6 +158,12 @@ fn lex_token(i: &str) -> IResult<&str, Token> {
 }
 
 fn lex_expr(i: &str) -> IResult<&str, Vec<Token>> { many0(ws(lex_token))(i) }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PlusMinus {
+	Plus = '+' as isize,
+	Minus = '-' as isize,
+}
 
 impl<'a, E> Parser<&'a str, Self, E> for PlusMinus
 where E: ParseError<&'a str>
@@ -242,11 +241,6 @@ where
 	<I as InputTakeAtPosition>::Item: AsChar + Clone,
 	E: ParseError<I>, {
 	delimited(multispace0, p, multispace0)
-}
-
-fn parse_number_i32(i: &str) -> IResult<&str, Expr> {
-	i32.map(|int| Expr::Literal(int))
-		.parse(i)
 }
 
 fn parse_literal(i: TokenStream) -> IResult<TokenStream, Expr> {
@@ -352,11 +346,9 @@ pub fn eval(expression: &str) -> Result<i32, NomError<&str>> {
 
 #[test]
 fn parse_i32() {
-	let (r, ast) = parse_number_i32("1323")
-		.finish()
-		.unwrap();
+	let (r, ast) = lex_literal("1323").finish().unwrap();
 
-	assert_eq!(ast, Expr::Literal(1323));
+	assert_eq!(ast, Token::Literal(1323));
 	assert_eq!(r, "")
 }
 
