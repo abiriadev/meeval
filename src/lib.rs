@@ -1,5 +1,7 @@
 use std::{
 	iter::Enumerate,
+	mem::discriminant,
+	num::NonZeroUsize,
 	ops::{Index, RangeFrom},
 	slice::Iter,
 };
@@ -9,7 +11,7 @@ use nom::{
 	bytes::complete::{tag, take},
 	character::complete::{char, i32, multispace0},
 	combinator::{all_consuming, value, verify},
-	error::{Error as NomError, ParseError},
+	error::{Error as NomError, ErrorKind, ParseError},
 	multi::{many0, many1},
 	sequence::{delimited, pair, separated_pair},
 	AsChar, Compare, CompareResult, Finish, IResult, InputIter, InputLength,
@@ -241,6 +243,26 @@ where
 	<I as InputTakeAtPosition>::Item: AsChar + Clone,
 	E: ParseError<I>, {
 	delimited(multispace0, p, multispace0)
+}
+
+fn parse_token<'a, E>(tok: Token) -> impl Parser<TokenStream<'a>, Token, E>
+where E: ParseError<TokenStream<'a>> {
+	move |i: TokenStream<'a>| {
+		if i.input_len() > 0 {
+			if discriminant(&i.0[0]) == discriminant(&tok) {
+				Ok((i.slice(1..), tok.clone()))
+			} else {
+				Err(nom::Err::Error(E::from_error_kind(
+					i,
+					ErrorKind::Tag,
+				)))
+			}
+		} else {
+			Err(nom::Err::Incomplete(Needed::Size(
+				unsafe { NonZeroUsize::new_unchecked(1) },
+			)))
+		}
+	}
 }
 
 fn parse_literal(i: TokenStream) -> IResult<TokenStream, Expr> {
