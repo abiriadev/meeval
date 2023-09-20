@@ -243,6 +243,30 @@ where
 	delimited(multispace0, p, multispace0)
 }
 
+fn parse_plus(i: TokenStream) -> IResult<TokenStream, Token> {
+	tag(Token::Plus)
+		.map(|t: TokenStream| t.0.get(0).unwrap().clone())
+		.parse(i)
+}
+
+fn parse_minus(i: TokenStream) -> IResult<TokenStream, Token> {
+	tag(Token::Minus)
+		.map(|t: TokenStream| t.0.get(0).unwrap().clone())
+		.parse(i)
+}
+
+fn parse_asterisk(i: TokenStream) -> IResult<TokenStream, Token> {
+	tag(Token::Asterisk)
+		.map(|t: TokenStream| t.0.get(0).unwrap().clone())
+		.parse(i)
+}
+
+fn parse_slash(i: TokenStream) -> IResult<TokenStream, Token> {
+	tag(Token::Slash)
+		.map(|t: TokenStream| t.0.get(0).unwrap().clone())
+		.parse(i)
+}
+
 fn parse_literal(i: TokenStream) -> IResult<TokenStream, Expr> {
 	verify(take(1usize), |t: &TokenStream| {
 		matches!(t.0.get(0).unwrap(), Token::Literal(..))
