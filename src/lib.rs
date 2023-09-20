@@ -34,7 +34,7 @@ impl InputLength for Token {
 	fn input_len(&self) -> usize { 1 }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 struct TokenStream<'a>(&'a [Token]);
 
 impl AsRef<[Token]> for TokenStream<'_> {
@@ -223,18 +223,12 @@ where
 fn parse_token<'a, E>(tok: Token) -> impl Parser<TokenStream<'a>, Token, E>
 where E: ParseError<TokenStream<'a>> {
 	move |i: TokenStream<'a>| {
-		if i.input_len() > 0 {
-			if discriminant(&i.0[0]) == discriminant(&tok) {
-				Ok((i.slice(1..), tok.clone()))
-			} else {
-				Err(nom::Err::Error(E::from_error_kind(
-					i,
-					ErrorKind::Tag,
-				)))
-			}
+		if i.input_len() > 0 && discriminant(&i.0[0]) == discriminant(&tok) {
+			Ok((i.slice(1..), tok.clone()))
 		} else {
-			Err(nom::Err::Incomplete(Needed::Size(
-				unsafe { NonZeroUsize::new_unchecked(1) },
+			Err(nom::Err::Error(E::from_error_kind(
+				i,
+				ErrorKind::Tag,
 			)))
 		}
 	}
@@ -280,15 +274,13 @@ fn parse_expr_binop_exp(i: TokenStream) -> IResult<TokenStream, Expr> {
 fn parse_expr_binop_mul(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
 		left_associative(
-			alt((
-				tag(Token::Asterisk).map(|t: TokenStream| t.0.get(0).unwrap()),
-				tag(Token::Slash).map(|t: TokenStream| t.0.get(0).unwrap()),
-			)),
+			AsteriskSlash::parse,
 			parse_expr_binop_exp,
 			|left, (op, right)| match op {
-				Token::Asterisk => Expr::Mul(Box::new(left), Box::new(right)),
-				Token::Slash => Expr::Div(Box::new(left), Box::new(right)),
-				_ => unreachable!(),
+				AsteriskSlash::Asterisk =>
+					Expr::Mul(Box::new(left), Box::new(right)),
+				AsteriskSlash::Slash =>
+					Expr::Div(Box::new(left), Box::new(right)),
 			},
 		),
 		parse_expr_binop_exp,
@@ -298,15 +290,11 @@ fn parse_expr_binop_mul(i: TokenStream) -> IResult<TokenStream, Expr> {
 fn parse_expr_binop_add(i: TokenStream) -> IResult<TokenStream, Expr> {
 	alt((
 		left_associative(
-			alt((
-				tag(Token::Plus).map(|t: TokenStream| t.0.get(0).unwrap()),
-				tag(Token::Minus).map(|t: TokenStream| t.0.get(0).unwrap()),
-			)),
+			PlusMinus::parse,
 			parse_expr_binop_mul,
 			|left, (op, right)| match op {
-				Token::Plus => Expr::Add(Box::new(left), Box::new(right)),
-				Token::Minus => Expr::Sub(Box::new(left), Box::new(right)),
-				_ => unreachable!(),
+				PlusMinus::Plus => Expr::Add(Box::new(left), Box::new(right)),
+				PlusMinus::Minus => Expr::Sub(Box::new(left), Box::new(right)),
 			},
 		),
 		parse_expr_binop_mul,
@@ -366,12 +354,14 @@ fn parse_i32() {
 #[test]
 fn parse_plusminus() {
 	assert_eq!(
-		PlusMinus::parse("123"),
+		PlusMinus::parse(TokenStream(&lex_expr("123").unwrap().1)),
 		Err(nom::Err::Error(()))
 	);
 
 	assert_eq!(
-		PlusMinus::parse::<()>("+123"),
+		PlusMinus::parse::<()>(TokenStream(
+			&lex_expr("+123").unwrap().1
+		)),
 		Ok(("123", PlusMinus::Plus))
 	);
 
