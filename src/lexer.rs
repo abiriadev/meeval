@@ -9,7 +9,7 @@ use nom::{
 	character::complete::{char, i32},
 	combinator::value,
 	multi::many0,
-	Compare, CompareResult, Finish, IResult, InputIter, InputLength, InputTake,
+	Compare, CompareResult, IResult, InputIter, InputLength, InputTake,
 	Needed, Parser, Slice,
 };
 
@@ -150,22 +150,29 @@ pub fn lex_expr(i: &str) -> IResult<&str, Vec<Token>> {
 	many0(ws(lex_token))(i)
 }
 
-#[test]
-fn parse_i32() {
-	let (r, ast) = lex_literal("1323").finish().unwrap();
+#[cfg(test)]
+mod tests {
+	use nom::Finish;
 
-	assert_eq!(ast, Token::Literal(1323));
-	assert_eq!(r, "")
-}
+	use crate::lexer::{lex_expr, lex_literal, Token};
 
-#[test]
-fn lex_test() {
-	assert_eq!(
-		lex_expr("1 + 2"),
-		Ok(("", vec![
-			Token::Literal(1),
-			Token::Plus,
-			Token::Literal(2),
-		]))
-	);
+	#[test]
+	fn parse_i32() {
+		let (r, ast) = lex_literal("1323").finish().unwrap();
+
+		assert_eq!(ast, Token::Literal(1323));
+		assert_eq!(r, "")
+	}
+
+	#[test]
+	fn lex_test() {
+		assert_eq!(
+			lex_expr("1 + 2"),
+			Ok(("", vec![
+				Token::Literal(1),
+				Token::Plus,
+				Token::Literal(2),
+			]))
+		);
+	}
 }

@@ -167,64 +167,74 @@ pub fn parse_expr(i: TokenStream) -> IResult<TokenStream, Expr> {
 	parse_expr_binop_add(i)
 }
 
-#[test]
-fn parse_add() {
-	let (r, ast) = parse_expr(
-		[Token::Literal(1), Token::Plus, Token::Literal(2)]
-			.as_slice()
-			.into(),
-	)
-	.finish()
-	.unwrap();
+#[cfg(test)]
+mod test {
+	use nom::Finish;
 
-	assert_eq!(
-		ast,
-		Expr::Add(
-			Box::new(Expr::Literal(1)),
-			Box::new(Expr::Literal(2))
+	use crate::{
+		lexer::Token,
+		parser::{parse_expr, AsteriskSlash, Expr, PlusMinus},
+	};
+
+	#[test]
+	fn parse_add() {
+		let (r, ast) = parse_expr(
+			[Token::Literal(1), Token::Plus, Token::Literal(2)]
+				.as_slice()
+				.into(),
 		)
-	);
-	assert_eq!(r, [].as_slice().into())
-}
+		.finish()
+		.unwrap();
 
-#[test]
-fn parse_plusminus() {
-	assert_eq!(
-		PlusMinus::parse([Token::Literal(123)].as_slice().into()),
-		Err(nom::Err::Error(()))
-	);
+		assert_eq!(
+			ast,
+			Expr::Add(
+				Box::new(Expr::Literal(1)),
+				Box::new(Expr::Literal(2))
+			)
+		);
+		assert_eq!(r, [].as_slice().into())
+	}
 
-	assert_eq!(
-		PlusMinus::parse::<()>([Token::Plus].as_slice().into()),
-		Ok(([].as_slice().into(), PlusMinus::Plus))
-	);
+	#[test]
+	fn parse_plusminus() {
+		assert_eq!(
+			PlusMinus::parse([Token::Literal(123)].as_slice().into()),
+			Err(nom::Err::Error(()))
+		);
 
-	assert_eq!(
-		PlusMinus::parse::<()>([Token::Minus].as_slice().into()),
-		Ok(([].as_slice().into(), PlusMinus::Minus))
-	);
-}
+		assert_eq!(
+			PlusMinus::parse::<()>([Token::Plus].as_slice().into()),
+			Ok(([].as_slice().into(), PlusMinus::Plus))
+		);
 
-#[test]
-fn parse_asteriskslash() {
-	assert_eq!(
-		AsteriskSlash::parse([Token::Literal(123)].as_slice().into()),
-		Err(nom::Err::Error(()))
-	);
+		assert_eq!(
+			PlusMinus::parse::<()>([Token::Minus].as_slice().into()),
+			Ok(([].as_slice().into(), PlusMinus::Minus))
+		);
+	}
 
-	assert_eq!(
-		AsteriskSlash::parse::<()>([Token::Asterisk].as_slice().into()),
-		Ok((
-			[].as_slice().into(),
-			AsteriskSlash::Asterisk
-		))
-	);
+	#[test]
+	fn parse_asteriskslash() {
+		assert_eq!(
+			AsteriskSlash::parse([Token::Literal(123)].as_slice().into()),
+			Err(nom::Err::Error(()))
+		);
 
-	assert_eq!(
-		AsteriskSlash::parse::<()>([Token::Slash].as_slice().into()),
-		Ok((
-			[].as_slice().into(),
-			AsteriskSlash::Slash
-		))
-	);
+		assert_eq!(
+			AsteriskSlash::parse::<()>([Token::Asterisk].as_slice().into()),
+			Ok((
+				[].as_slice().into(),
+				AsteriskSlash::Asterisk
+			))
+		);
+
+		assert_eq!(
+			AsteriskSlash::parse::<()>([Token::Slash].as_slice().into()),
+			Ok((
+				[].as_slice().into(),
+				AsteriskSlash::Slash
+			))
+		);
+	}
 }
